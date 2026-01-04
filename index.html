@@ -5,7 +5,7 @@
     <title>C Quiz – Chapter 2 (Operators)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      /* ... (I have kept your excellent styling exactly as it was) ... */
+      /* --- Original Excellent Styling --- */
       * {
         box-sizing: border-box;
         margin: 0;
@@ -147,7 +147,6 @@
         display: none;
       }
       .result-card {
-        text-align: center;
         padding-top: 8px;
       }
       .row {
@@ -163,15 +162,49 @@
       .incorrect {
         color: #f97373;
       }
+
+      /* --- NEW: Review Section Styling --- */
+      #review-section {
+        margin-top: 24px;
+        text-align: left;
+      }
+      .review-item {
+        background: #0f172a;
+        border: 1px solid #1f2937;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      .review-q {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+      .review-ans {
+        font-size: 13px;
+        margin-top: 4px;
+      }
+      .review-container {
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 8px;
+        margin-top: 10px;
+      }
+      /* Custom Scrollbar for Review */
+      .review-container::-webkit-scrollbar {
+        width: 6px;
+      }
+      .review-container::-webkit-scrollbar-thumb {
+        background: #1f2937;
+        border-radius: 10px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div id="quiz-screen">
         <div class="title">C Programming Quiz</div>
-        <div class="subtitle">
-          Chapter 2 – Operators & Instructions (Apna College)
-        </div>
+        <div class="subtitle">Chapter 2 – Operators & Instructions</div>
 
         <div class="progress-row">
           <span id="q-counter">Question 1 of 20</span>
@@ -202,28 +235,39 @@
           <div class="title">Quiz Completed!</div>
           <div class="stats">
             <div class="row">
-              <span class="label">Total Questions</span
-              ><span class="value" id="res-total">20</span>
+              <span class="label">Total Questions</span>
+              <span class="value" id="res-total">20</span>
             </div>
             <div class="row">
-              <span class="label">Correct</span
-              ><span class="value correct" id="res-correct">0</span>
+              <span class="label">Correct</span>
+              <span class="value correct" id="res-correct">0</span>
             </div>
             <div class="row">
-              <span class="label">Incorrect</span
-              ><span class="value incorrect" id="res-incorrect">0</span>
+              <span class="label">Incorrect</span>
+              <span class="value incorrect" id="res-incorrect">0</span>
             </div>
             <div class="row">
-              <span class="label">Accuracy</span
-              ><span class="value" id="res-percent">0%</span>
+              <span class="label">Accuracy</span>
+              <span class="value" id="res-percent">0%</span>
             </div>
             <div class="row">
-              <span class="label">Time Taken</span
-              ><span class="value" id="res-time">00:00</span>
+              <span class="label">Time Taken</span>
+              <span class="value" id="res-time">00:00</span>
             </div>
           </div>
-          <p id="res-remark" style="margin: 20px 0"></p>
-          <button class="btn-primary" onclick="location.reload()">
+
+          <div id="review-section">
+            <h3 style="font-size: 16px; color: #9ca3af; margin-bottom: 8px">
+              Review Mistakes:
+            </h3>
+            <div class="review-container" id="review-container"></div>
+          </div>
+
+          <button
+            class="btn-primary"
+            style="width: 100%; margin-top: 20px"
+            onclick="location.reload()"
+          >
             Try Again
           </button>
         </div>
@@ -425,28 +469,67 @@
           renderQuestion();
         }
       };
+
       document.getElementById("submit-btn").onclick = () => {
         if (userAnswers.includes(-1)) {
-          alert("Please answer all questions!");
+          alert("Please answer all questions before submitting!");
           return;
         }
         clearInterval(timerInterval);
-        const correct = userAnswers.reduce(
-          (acc, ans, i) => acc + (ans === questions[i].correctIndex ? 1 : 0),
-          0
-        );
-        document.getElementById("res-correct").textContent = correct;
+        showResults();
+      };
+
+      function showResults() {
+        let correctCount = 0;
+        const reviewContainer = document.getElementById("review-container");
+        reviewContainer.innerHTML = "";
+
+        questions.forEach((q, i) => {
+          const isCorrect = userAnswers[i] === q.correctIndex;
+          if (isCorrect) correctCount++;
+
+          // Create Review Item
+          const item = document.createElement("div");
+          item.className = "review-item";
+          item.style.borderLeft = isCorrect
+            ? "4px solid #22c55e"
+            : "4px solid #f97373";
+
+          item.innerHTML = `
+            <div class="review-q">${i + 1}. ${q.text}</div>
+            <div class="review-ans">
+              <span class="${isCorrect ? "correct" : "incorrect"}">
+                ${isCorrect ? "✅" : "❌"} Your choice: ${
+            q.options[userAnswers[i]]
+          }
+              </span>
+              ${
+                !isCorrect
+                  ? `<br><span class="correct">✔️ Correct: ${
+                      q.options[q.correctIndex]
+                    }</span>`
+                  : ""
+              }
+            </div>
+          `;
+          reviewContainer.appendChild(item);
+        });
+
+        // Update Stats
+        document.getElementById("res-correct").textContent = correctCount;
         document.getElementById("res-incorrect").textContent =
-          questions.length - correct;
-        document.getElementById("res-percent").textContent = `${
-          (correct / questions.length) * 100
-        }%`;
+          questions.length - correctCount;
+        document.getElementById("res-percent").textContent = `${Math.round(
+          (correctCount / questions.length) * 100
+        )}%`;
         document.getElementById("res-time").textContent = document
           .getElementById("timer")
           .textContent.replace("Time: ", "");
+
+        // Switch Screen
         document.getElementById("quiz-screen").classList.add("hidden");
         document.getElementById("result-screen").classList.remove("hidden");
-      };
+      }
 
       renderQuestion();
     </script>
